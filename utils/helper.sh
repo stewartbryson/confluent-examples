@@ -28,6 +28,15 @@ function check_ccloud() {
   return 0
 }
 
+function check_jq() {
+  if [[ $(type jq 2>&1) =~ "not found" ]]; then
+    echo "'jq' is not found. Install 'jq' and try again"
+    exit 1
+  fi
+
+  return 0
+}
+
 function check_running_cp() {
   expected_version=$1
 
@@ -65,6 +74,7 @@ function check_running_elasticsearch() {
       echo -e "\nTo showcase a sink connector, this script requires Elasticsearch to be listening on port 9200. Please reconfigure and restart Elasticsearch and run again.\n"
       exit 1
     else
+      check_jq || exit 1
       actual_version=$(curl --silent 'http://localhost:9200/?pretty' | jq .version.number -r)
       if [[ $expected_version != $actual_version ]]; then
         echo -e "\nTo showcase a sink connector, this script requires Elasticsearch version $expected_version but the running version is $actual_version. Please run the correct version of Elasticsearch to proceed.\n"
@@ -184,7 +194,7 @@ function prep_sqltable_customers() {
 
   DB=/usr/local/lib/microservices.db
   echo "DROP TABLE IF EXISTS $TABLE;" | sqlite3 $DB
-  echo "CREATE TABLE $TABLE(id INTEGER KEY NOT NULL, firstName VARCHAR(255), lastName VARCHAR(255), email VARCHAR(255), address VARCHAR(255));" | sqlite3 $DB
+  echo "CREATE TABLE $TABLE(id INTEGER KEY NOT NULL, firstName VARCHAR(255), lastName VARCHAR(255), email VARCHAR(255), address VARCHAR(255), level VARCHAR(255));" | sqlite3 $DB
   echo ".import $TABLE_PATH $TABLE" | sqlite3 $DB
   #echo "pragma table_info($TABLE);" | sqlite3 $DB
   #echo "select * from $TABLE;" | sqlite3 $DB
